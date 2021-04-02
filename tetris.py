@@ -6,7 +6,7 @@ WALL = 1,
 PIECE = 2,
 
 # PIECE RELATED
-I_SHAPE = [1, 1, 1, 1]
+# I_SHAPE = [1, 1, 1, 1]
 L_SHAPE = [
             [1, 0],
             [1, 0],
@@ -26,7 +26,7 @@ SQUARE_SHAPE = [
     [1, 1],
     [1, 1],
 ]
-ALL_SHAPES = [I_SHAPE, L_SHAPE, L_SHAPE_INVERTED, THUNDER_SHAPE, SQUARE_SHAPE]
+ALL_SHAPES = [L_SHAPE, L_SHAPE_INVERTED, THUNDER_SHAPE, SQUARE_SHAPE]
 
 
 class Grid:
@@ -35,7 +35,7 @@ class Grid:
         for column_index in range(0, size):
             column = []
             for row_index in range(0, size):
-                column.append(GridSquare(x=row_index, y=column_index))
+                column.append(GridSquare(x=column_index, y=row_index))
             grid_squares.append(column)
         self.size = size
         self.grid_squares = grid_squares
@@ -51,13 +51,15 @@ class Grid:
     def _is_wall(self, grid_cell):
         position = grid_cell.position
         return any([
-            position.x == 0, 
             position.x == self.size - 1, 
+            position.y == 0, 
             position.y == self.size - 1,
         ])
 
     def add_piece(self, piece):
-        self.grid_squares[piece.x][piece.y].fill(WALL)
+        piece_position_matrix = piece.get_piece_positions_matrix()
+        for position in piece_position_matrix:
+            self.grid_squares[position.y][position.x].fill(PIECE)
         # Do wizualizacji tyhlko
         for grid in self.grid_squares:
             print(grid)
@@ -108,7 +110,19 @@ class Piece:
     def __repr__(self):
         return f"x: {self.x}, y: {self.y}, figure: {self.figure}"
 
-    
+    def get_piece_positions_matrix(self):
+        matrix = []
+        pos_x = self.x
+        pos_y = self.y
+        for f in self.figure:
+            for cell in f:
+                if cell:
+                    matrix.append(Position(pos_x, pos_y))
+                pos_x += 1
+            pos_x = self.x
+            pos_y += 1
+        return matrix
+
 
 class Game:
     def __init__(self, grid_size=20):
@@ -121,8 +135,7 @@ class Game:
         game_over = False
 
         current_piece = self.add_piece_to_grid(grid, piece_factory)
-
-    
+        
     def add_piece_to_grid(self, grid, piece_facotry):
         piece = piece_facotry.get_piece(2, 2)
         grid.add_piece(piece)
