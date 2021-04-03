@@ -1,5 +1,6 @@
 import random
 import copy
+import math
 
 # GRID RELATED
 NONE = 0
@@ -38,8 +39,9 @@ ALL_SHAPES = [L_SHAPE, L_SHAPE_INVERTED, THUNDER_SHAPE, SQUARE_SHAPE]
 MOVEMENT_DOWN = 0 
 MOVEMENT_LEFT = 1
 MOVEMENT_RIGHT = 2
-
-POSSIBLE_MOVES = [MOVEMENT_DOWN, MOVEMENT_LEFT, MOVEMENT_RIGHT]
+MOVEMENT_NONE = 3
+MOVEMENT_UP = 4
+POSSIBLE_MOVES = [MOVEMENT_DOWN, MOVEMENT_LEFT, MOVEMENT_RIGHT, MOVEMENT_NONE]
 
 
 class Grid:
@@ -80,20 +82,22 @@ class Grid:
             self.grid_squares[position.y][position.x].clear()
     
     def can_add_piece(self, piece):
-        # to nie dziala
         piece_position_matrix = piece.get_piece_positions_matrix()
         is_position_available = []
         for position in piece_position_matrix:
-            grid_cell = self.grid_squares[position.y][position.x]
+            try:
+                grid_cell = self.grid_squares[position.y][position.x]
+            except IndexError:
+                return False
             is_position_available.append(grid_cell.is_empty() and self._is_position_within_bounds(position))
         return all(is_position_available)
 
     def _is_position_within_bounds(self, position):
         # Starts with 1 and substracted with 2(instead 1) because of walls
         x_bounds = (1, self.size - 2)
-        y_bounds = (1, self.size - 2)
+        y_bounds = (0, self.size - 2)
         within_bounds_conditions = [
-            position.x >= x_bounds[0], position.x <= x_bounds[1], 
+            position.x > x_bounds[0], position.x < x_bounds[1], 
             position.y >= y_bounds[0], position.y <= y_bounds[1]
         ]
         return all(within_bounds_conditions)
@@ -154,13 +158,16 @@ class Piece:
         return f"x: {self.position.x}, y: {self.position.y}, figure: {self.figure}"
 
     def move(self, movement):
-        new_position = self.position
-        if movement == MOVEMENT_DOWN:
+        new_position = copy.deepcopy(self.position)
+        if movement == MOVEMENT_NONE:
             new_position.shift(0, 1)
         if movement == MOVEMENT_LEFT:
             new_position.shift(-1, 0)
         if movement == MOVEMENT_RIGHT:
             new_position.shift(1, 0)
+        if movement == MOVEMENT_DOWN:
+            new_position.rotated(180)
+            print(f"old pos {self.position} new pos {new_position}")
         return Piece(new_position.x, new_position.y, self.figure)
 
     def get_piece_positions_matrix(self):
@@ -186,18 +193,36 @@ class Game:
         grid.populate_with_walls()
         piece_factory = PieceFactory()
         game_over = False
-        piece = piece_factory.get_piece(2, 2)
+        piece = piece_factory.get_piece(10, 0)
 
         current_piece = self.add_piece_to_grid(grid, piece)
         self.render_grid(grid)
 
         while not game_over:
             grid.remove_piece(current_piece)
+            moved = False
             if grid.do_piece_has_valid_move(current_piece):
                 player_move = self.get_player_move()
-                current_piece.move(player_move)
-                self.add_piece_to_grid(grid, current_piece)
-                self.render_grid(grid)
+                # Avoid double move down
+                if player_move is not MOVEMENT_NONE:
+                    moved_piece = current_piece.move(player_move)
+
+                    if grid.can_add_piece(moved_piece):
+                        current_piece = moved_piece
+                        moved = True
+
+            moved_piece = current_piece.move(MOVEMENT_NONE)
+            if grid.can_add_piece(moved_piece):
+                current_piece = moved_piece
+                moved = True
+
+            self.add_piece_to_grid(grid, current_piece)
+            # o jeden za pozno i nie wykrywa innych klockow
+            if not moved:
+                piece = piece_factory.get_piece(10, 0)
+                current_piece = self.add_piece_to_grid(grid, piece)
+            self.render_grid(grid)
+
 
         
     def add_piece_to_grid(self, grid, piece):
@@ -225,6 +250,8 @@ class Game:
             move = MOVEMENT_RIGHT
         elif player_input in ["w", "W"]:
             move = ""
+        elif player_input in ["", " "]:
+            move = MOVEMENT_NONE
 
         return move
 
@@ -249,6 +276,17 @@ class Position:
     
     def __repr__(self):
         return f"Postition ({self.x}, {self.y})"
+    
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def rotated(self, degrees):
+        rad = math.pi / 180 * degrees
+
+        return Position(
+            self.x * math.cos(rad) - self.y * math.sin(rad),
+            self.x * math.sin(rad) + self.y * math.cos(rad)
+        )
 
 game = Game()
 game.play()
