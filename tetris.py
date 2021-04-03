@@ -18,7 +18,6 @@ class Game:
         self.render_grid(grid)
 
         while not game_over:
-            print(grid)
             grid.remove_piece(current_piece)
             moved = False
             if grid.do_piece_has_valid_move(current_piece):
@@ -40,6 +39,8 @@ class Game:
             if not moved:
                 piece = piece_factory.get_piece(10, 0)
                 current_piece = self.add_piece_to_grid(grid, piece)
+                if not current_piece:
+                    game_over = True
             self.render_grid(grid)
 
     @staticmethod
@@ -55,7 +56,10 @@ class Game:
 
     @staticmethod
     def add_piece_to_grid(grid, piece):
-        grid.add_piece(piece)
+        if grid.can_add_piece(piece):
+            grid.add_piece(piece)
+        else:
+            return None
         return piece
 
     def get_player_move(self):

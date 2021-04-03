@@ -1,8 +1,9 @@
 # GRID RELATED
 import copy
 
-from position import Position
 from moves import POSSIBLE_MOVES
+from position import Position
+
 NONE = 0
 WALL = 1
 PIECE = 2
