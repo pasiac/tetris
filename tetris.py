@@ -1,3 +1,5 @@
+import random
+
 from grid import Grid
 from moves import MOVEMENT_NONE, MOVEMENT_LEFT, MOVEMENT_RIGHT, MOVEMENT_DOWN, MOVEMENT_UP
 from piece import PieceFactory
@@ -9,13 +11,12 @@ class Game:
 
     def play(self):
         grid = Grid(size=self.grid_size)
-        grid.populate_with_walls()
         piece_factory = PieceFactory()
         game_over = False
-        piece = piece_factory.get_piece(10, 0)
+        piece = piece_factory.get_piece(9, 0)
 
         current_piece = self.add_piece_to_grid(grid, piece)
-        self.render_grid(grid)
+        grid.render()
 
         while not game_over:
             grid.remove_piece(current_piece)
@@ -37,25 +38,16 @@ class Game:
 
             self.add_piece_to_grid(grid, current_piece)
             if not moved:
-                piece = piece_factory.get_piece(10, 0)
+                spawn_x_pos = random.randint(1, 17)
+                piece = piece_factory.get_piece(spawn_x_pos, 0)
                 current_piece = self.add_piece_to_grid(grid, piece)
                 if not current_piece:
                     game_over = True
-            self.render_grid(grid)
-
-    @staticmethod
-    def render_grid(grid):
-        display_contents = ""
-        for column in grid.grid_squares:
-            for row in column:
-                display_contents += str(row)
-
-            display_contents += "\n"
-
-        print(display_contents)
+            grid.render()
 
     @staticmethod
     def add_piece_to_grid(grid, piece):
+
         if grid.can_add_piece(piece):
             grid.add_piece(piece)
         else:

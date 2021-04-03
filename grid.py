@@ -15,12 +15,14 @@ class Grid:
         for column_index in range(0, size):
             column = []
             for row_index in range(0, size):
-                column.append(GridSquare(x=row_index, y=column_index))
+                column.append(GridCell(x=row_index, y=column_index))
             grid_squares.append(column)
+
         self.size = size
         self.grid_squares = grid_squares
+        self._populate_with_walls()
 
-    def populate_with_walls(self):
+    def _populate_with_walls(self):
         for grid_row in self.grid_squares:
             for grid_cell in grid_row:
                 if self._is_wall(grid_cell):
@@ -73,13 +75,18 @@ class Grid:
             are_valid_moves.append(is_valid_move)
         return any(are_valid_moves)
 
-    def __repr__(self):
+    def render(self):
+        display_contents = ""
         for column in self.grid_squares:
-            print(column)
-        return "test"
+            for row in column:
+                display_contents += str(row) + " "
+
+            display_contents += "\n"
+
+        print(display_contents)
 
 
-class GridSquare:
+class GridCell:
     def __init__(self, x=None, y=None):
         self.occupied_by = NONE
         self.position = Position(x, y)
@@ -99,8 +106,8 @@ class GridSquare:
     def is_piece(self):
         return self.occupied_by == PIECE
 
-    def fill(self, element):
-        self.occupied_by = element
+    def fill(self, element_type):
+        self.occupied_by = element_type
 
     def clear(self):
         self.occupied_by = NONE

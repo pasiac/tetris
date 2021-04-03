@@ -29,13 +29,13 @@ class Piece:
         new_piece = copy.deepcopy(self)
         if movement == MOVEMENT_NONE:
             new_piece.position.shift(0, 1)
-        if movement == MOVEMENT_LEFT:
+        elif movement == MOVEMENT_LEFT:
             new_piece.position.shift(-1, 0)
-        if movement == MOVEMENT_RIGHT:
+        elif movement == MOVEMENT_RIGHT:
             new_piece.position.shift(1, 0)
-        if movement == MOVEMENT_DOWN:
+        elif movement == MOVEMENT_DOWN:
             new_piece.figure.rotate_clockwise()
-        if movement == MOVEMENT_UP:
+        elif movement == MOVEMENT_UP:
             new_piece.figure.rotate_counter_clockwise()
         return new_piece
 
