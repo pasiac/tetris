@@ -9,31 +9,31 @@ PIECE = 2
 
 # PIECE RELATED
 I_SHAPE = [
-    [1, 0], 
-    [1, 0], 
-    [1, 0], 
-    [1, 0]
+    [0, 0, 1, 0], 
+    [0, 0, 1, 0], 
+    [0, 0, 1, 0], 
+    [0, 0, 1, 0]
     ]
 L_SHAPE = [
-            [1, 0],
-            [1, 0],
-            [1, 1],
+            [1, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
         ]
 L_SHAPE_INVERTED = [
-        [0, 1],
-        [0, 1],
-        [1, 1],
+        [0, 1, 0],
+        [0, 1, 0],
+        [1, 1, 0],
     ]
 THUNDER_SHAPE = [
-    [0, 1],
-    [1, 1],
-    [1, 0],
+    [0, 1, 0],
+    [1, 1, 0],
+    [1, 0, 0],
 ]
 SQUARE_SHAPE = [
     [1, 1],
     [1, 1],
 ]
-ALL_SHAPES = [L_SHAPE, L_SHAPE_INVERTED, THUNDER_SHAPE, SQUARE_SHAPE]
+ALL_SHAPES = [I_SHAPE, L_SHAPE, L_SHAPE_INVERTED, THUNDER_SHAPE, SQUARE_SHAPE]
 
 # MovementTypes
 MOVEMENT_DOWN = 0 
@@ -95,9 +95,9 @@ class Grid:
     def _is_position_within_bounds(self, position):
         # Starts with 1 and substracted with 2(instead 1) because of walls
         x_bounds = (1, self.size - 2)
-        y_bounds = (0, self.size - 2)
+        y_bounds = (0, self.size - 1)
         within_bounds_conditions = [
-            position.x > x_bounds[0], position.x < x_bounds[1], 
+            position.x >= x_bounds[0], position.x <= x_bounds[1], 
             position.y >= y_bounds[0], position.y <= y_bounds[1]
         ]
         return all(within_bounds_conditions)
@@ -111,7 +111,10 @@ class Grid:
             are_valid_moves.append(is_valid_move)
         return any(are_valid_moves)
 
-
+    def __repr__(self):
+        for column in self.grid_squares:
+            print(column)
+        return "test"
 class GridSquare:
     def __init__(self, x=None ,y=None):
         self.occupied_by = NONE
@@ -166,8 +169,9 @@ class Piece:
         if movement == MOVEMENT_RIGHT:
             new_position.shift(1, 0)
         if movement == MOVEMENT_DOWN:
-            new_position.rotated(180)
-            print(f"old pos {self.position} new pos {new_position}")
+            self.figure =self.rotate_clockwise()
+        if movement == MOVEMENT_UP:
+            self.figure =self.rotate_counter_clockwise()
         return Piece(new_position.x, new_position.y, self.figure)
 
     def get_piece_positions_matrix(self):
@@ -183,7 +187,36 @@ class Piece:
             pos_y += 1
         return matrix
 
+    def rotate_clockwise(self):
+        n = len(self.figure)
+        new_figure = []
+        for j in range(n) :
+            column = []
+            for i in range(n - 1, -1, -1) :
+                column.append(self.figure[i][j])
+            new_figure.append(column)
+        return new_figure
 
+    def rotate_counter_clockwise(self):
+        n = len(self.figure)
+        for x in range(0, int(n / 2)):
+            for y in range(x, n-x-1):
+
+                # store current cell in temp variable
+                temp = self.figure[x][y]
+    
+                # move values from right to top
+                self.figure[x][y] = self.figure[y][n-1-x]
+    
+                # move values from bottom to right
+                self.figure[y][n-1-x] = self.figure[n-1-x][n-1-y]
+    
+                # move values from left to bottom
+                self.figure[n-1-x][n-1-y] = self.figure[n-1-y][x]
+    
+                # assign temp to left
+                self.figure[n-1-y][x] = temp
+        return self.figure
 class Game:
     def __init__(self, grid_size=20):
         self.grid_size = grid_size
@@ -199,6 +232,7 @@ class Game:
         self.render_grid(grid)
 
         while not game_over:
+            print(grid)
             grid.remove_piece(current_piece)
             moved = False
             if grid.do_piece_has_valid_move(current_piece):
@@ -249,7 +283,7 @@ class Game:
         elif player_input in ["d", "D"]:
             move = MOVEMENT_RIGHT
         elif player_input in ["w", "W"]:
-            move = ""
+            move = MOVEMENT_UP
         elif player_input in ["", " "]:
             move = MOVEMENT_NONE
 
